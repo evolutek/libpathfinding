@@ -44,7 +44,7 @@ class Obstacle:
 class Path:
 
 	def __init__(self, p):
-		self.path = []
+		self.listofpoint = []
 		self.start = p
 		self.path.append(p)
 
@@ -60,13 +60,15 @@ class Path:
 				return "Done"
 		return "Error not found"
 
-	# Compute the cost of the point
+	# Compute the cost of the path
 	def ComputeCost(self):
 		cost = 0
-		for i in range(0, len(path)):
+		for i in range(0, len(path)-1):
 			cost =+ (sqrt((path[i].x - path[i+1].x)**2 + (path[i].y - path[i+1].y)**2))
 		return cost
 
+	def __len__(self):
+		return len(listofpoint)
 
 # Class to create the map:
 # w and h are the width and the hight
@@ -105,13 +107,13 @@ class Map:
 	# Return a point if it is in the map else return None
 	def GetPointFromMap(self, x, y):
 		valid = (x >= self.robot_radius
-			and x <= self.w - self.robot_radius
+			and x <= self.h - self.robot_radius
 			and y >= self.robot_radius
-			and y <= self.h - self.robot_radius)
+			and y <= self.w - self.robot_radius)
 		return self.map[y][x] if valid else None
 
 	# Return a list of the neighborhoods of a point of the map
-	def GetNghbrs(self, x, y):
+	def GetNghbrs(self, y, x):
 		N = []
 		N.append(self.GetPointFromMap(x - 1, y))
 		N.append(self.GetPointFromMap(x + 1, y))
@@ -126,9 +128,9 @@ class Map:
 	# Return if the robot can access to a point
 	def IsBlocked(self, y, x):
 		if(x < self.robot_radius or
-			x > (self.w - self.robot_radius) or
+			x > (self.h - self.robot_radius) or
 			y < self.robot-radius or
-			y > self.h - self.robor_radius):
+			y > self.w - self.robor_radius):
 			return True;
 		return self.map[x][y].cost != self.EmptyCost
 
@@ -248,13 +250,68 @@ class Pathfinding:
 					return None
 		return None
 	
-	def ComputePathFromRight(self, p1, obstacle, path = []):
-		x = obstacle.x1
-		y = obtacle.y2 + robot_radius
-		if path == []:
-			path.append(p1)
-		# FIXME
+	def ComputePathFromRight(self, p, obstacle, path = Path(p)):
+		if self.map.IsBlocked(obstacle.x1 - self.robot_radius, obstacle.y2 + self.robot_radius):
+			return None
+		if self.map.IsBlocked(obstacle.x2 + self.robot_radius, obstacle.y2 + self.robot_radius):
+			return None
+		path.AddPoint(self.GetPoint(obstacle.x1 - self.robot_radius, obstacle.y2 + self.robot_radius))
+		path.AddPoint(self.GetPoint(obstacle.x2 + self.robot_radius, obstacle.y2 + self.robot_radius))
+		return path
 
+	def ComputePathFromLeft(self, p1, obstacle, path = Path(p1)):
+		if self.map.IsBlocked(obstacle.x1 - self.robot_radius, obstacle.y1 - self.robot_radius):
+			return None
+		if self.map.IsBlocked(obstacle.x2 + self.robot_radius, obstacle.y1 - self.robot_radius):
+			return None
+		path.AddPoint(self.GetPoint(obstacle.x1 - self.robot_radius, obstacle.y1 - self.robot_radius))
+		path.AddPoint(self.GetPoint(obstacle.x2 + self.robot_radius, obstacle.y1 - self.robot_radius))
+		return path
+
+	def IsPossible(self, path):
+		for i in range(0, len(path)-1):
+			if self.IfOnLineOfSight(path.listofpoint[i], path.listofpoint[i+1]):
+				return false
+		return true
+
+	def ComputePath(self, p1, p2):
+		allpath = []
+		path = Path(p1)
+		path.AddPoint(p2)
+		allpath.append(path)
+		passpossible = []
+		while true:
+			for path in allpath:
+				if IsPossible(path):
+					passpossible.append(path)
+			if passpossible != []:
+				found = passpossible[0]
+				for path in range(1, len(passpossible))
+					if found.ComputeCost() > path.ComputeCost():
+						found = path
+				return path
+			else:
+				for path in allpath:
+					j = 1
+					pathr = Path(p1)
+					pathl = Path(p1)
+					for i in range(1, len(path)):
+						if IfOnLineOfSight(path.listofpoint[i-1], path.listofpoint[i]):
+							pathr = (ComputePathFormRight(path.listofpoint[i-1], FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathr))
+							pathl = (ComputePathFormLeft(path.listofpoint[i-1], FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathl))
+							break
+						j += 1
+						pathr.AddPoint(path.listofpoint[i])
+						pathl.AddPoint(path.listogpoint[i])
+					for i in range(j, len(path):
+						if pathr != None:
+							pathr.AddPoint(path.listofpoint[i])
+						if pathl != None:
+							pathl.AddPoint(path.listogpoint[i])
+					if pathr != None:
+						allpath.append(pathr)
+					if pathl != None:
+						allpath.append(pathl)
 	# Debug Part
 
 	# Print all the obstacles
