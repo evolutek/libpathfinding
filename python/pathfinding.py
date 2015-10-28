@@ -312,6 +312,7 @@ class Pathfinding:
 						allpath.append(pathr)
 					if pathl != None:
 						allpath.append(pathl)
+					allpath.remove(path)
 	# Debug Part
 
 	# Print all the obstacles
