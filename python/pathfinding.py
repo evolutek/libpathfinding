@@ -67,6 +67,7 @@ class Path:
 			cost =+ (sqrt((path[i].x - path[i+1].x)**2 + (path[i].y - path[i+1].y)**2))
 		return cost
 
+	# return the number of point in a path
 	def __len__(self):
 		return len(listofpoint)
 
@@ -249,8 +250,9 @@ class Pathfinding:
 							return obstacle
 					return None
 		return None
-	
-	def ComputePathFromRight(self, p, obstacle, path = Path(p)):
+
+	# Add two point to pass at the right of the obstacle
+	def ComputePathFromRight(self, obstacle, path):
 		if self.map.IsBlocked(obstacle.x1 - self.robot_radius, obstacle.y2 + self.robot_radius):
 			return None
 		if self.map.IsBlocked(obstacle.x2 + self.robot_radius, obstacle.y2 + self.robot_radius):
@@ -259,7 +261,8 @@ class Pathfinding:
 		path.AddPoint(self.GetPoint(obstacle.x2 + self.robot_radius, obstacle.y2 + self.robot_radius))
 		return path
 
-	def ComputePathFromLeft(self, p1, obstacle, path = Path(p1)):
+	# Add two point to pass at the left of the obstecla
+	def ComputePathFromLeft(self, obstacle, path):
 		if self.map.IsBlocked(obstacle.x1 - self.robot_radius, obstacle.y1 - self.robot_radius):
 			return None
 		if self.map.IsBlocked(obstacle.x2 + self.robot_radius, obstacle.y1 - self.robot_radius):
@@ -268,12 +271,14 @@ class Pathfinding:
 		path.AddPoint(self.GetPoint(obstacle.x2 + self.robot_radius, obstacle.y1 - self.robot_radius))
 		return path
 
+	# Return if a path is possible
 	def IsPossible(self, path):
 		for i in range(0, len(path)-1):
 			if self.IfOnLineOfSight(path.listofpoint[i], path.listofpoint[i+1]):
 				return false
 		return true
 
+	# Compute the better pass between two point
 	def ComputePath(self, p1, p2):
 		allpath = []
 		path = Path(p1)
@@ -286,7 +291,7 @@ class Pathfinding:
 					passpossible.append(path)
 			if passpossible != []:
 				found = passpossible[0]
-				for path in range(1, len(passpossible))
+				for path in range(1, len(passpossible)):
 					if found.ComputeCost() > path.ComputeCost():
 						found = path
 				return path
@@ -297,13 +302,13 @@ class Pathfinding:
 					pathl = Path(p1)
 					for i in range(1, len(path)):
 						if IfOnLineOfSight(path.listofpoint[i-1], path.listofpoint[i]):
-							pathr = (ComputePathFormRight(path.listofpoint[i-1], FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathr))
-							pathl = (ComputePathFormLeft(path.listofpoint[i-1], FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathl))
+							pathr = (FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathr))
+							pathl = (FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathl))
 							break
 						j += 1
 						pathr.AddPoint(path.listofpoint[i])
 						pathl.AddPoint(path.listogpoint[i])
-					for i in range(j, len(path):
+					for i in range(j, len(path)):
 						if pathr != None:
 							pathr.AddPoint(path.listofpoint[i])
 						if pathl != None:
@@ -313,10 +318,10 @@ class Pathfinding:
 					if pathl != None:
 						allpath.append(pathl)
 					allpath.remove(path)
+
 	# Debug Part
 
 	# Print all the obstacles
 	def PrintObstacles(self):
 		for obstacle in self.obstacles:
 			print(str(obstacle))
-
