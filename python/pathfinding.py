@@ -13,14 +13,14 @@ import sys
 # all point have a cost (Empty, Obstacle, Border)
 class Point:
 
-	def __init__(self, x, y, cost):
+	def __init__(self, x, y, cost = None):
 		self.x = x
 		self.y = y
 		self.cost = cost
 
 	# Permite to convert a point to string
 	def __str__(self):
-		return str(self.x) + ", " + str(self.y) + " = " + str(self.cost)
+		return "(" + str(self.x) + ", " + str(self.y) + ")"
 
 # Class to create obstacle :
 # (x, y) is the center
@@ -46,17 +46,17 @@ class Path:
 	def __init__(self, p):
 		self.listofpoint = []
 		self.start = p
-		self.path.append(p)
+		self.listofpoint.append(p)
 
 	# Can add a point to the path
 	def AddPoint(self, p):
-		self.path.append(p)
+		self.listofpoint.append(p)
 
 	# Can remove a point to the path
 	def RemovePoint(self, point):
-		for p in self.path:
+		for p in self.listofpoint:
 			if p == point:
-				self.path.remove(p)
+				self.listofpoint.remove(p)
 				return "Done"
 		return "Error not found"
 
@@ -67,9 +67,24 @@ class Path:
 			cost =+ (sqrt((path[i].x - path[i+1].x)**2 + (path[i].y - path[i+1].y)**2))
 		return cost
 
-	# return the number of point in a path
+	# Return the number of point in a path
 	def __len__(self):
-		return len(listofpoint)
+		return len(self.listofpoint)
+	
+	def __str__(self):
+		s = ""
+		for p in self.listofpoint:
+
+			s += str(p) + " -> "
+		return s
+
+	# Debug part
+
+	# Print the path on the map
+	def PrintPath(self):
+		for p in self.listofpoint:
+			print(str(p))
+
 
 # Class to create the map:
 # w and h are the width and the hight
@@ -128,11 +143,11 @@ class Map:
 	
 	# Return if the robot can access to a point
 	def IsBlocked(self, y, x):
-		if(x < self.robot_radius or
-			x > (self.h - self.robot_radius) or
-			y < self.robot-radius or
-			y > self.w - self.robor_radius):
-			return True;
+		if(x <= self.robot_radius or
+			x >= (self.h - self.robot_radius) or
+			y <= self.robot_radius or
+			y >= self.w - self.robot_radius):
+			return True
 		return self.map[x][y].cost != self.EmptyCost
 
     # Debug Part
@@ -140,14 +155,15 @@ class Map:
 	# Print all the map
 	def PrintMap(self):
 		for x in range(self.h+1):
+			s = ""
 			for y in range(self.w+1):
 				if self.map[x][y].cost == self.EmptyCost:
-					print(' ')
+					s += ' '
 				elif self.map[x][y].cost == self.BorderCost:
-					print('#')
+					s += '#'
 				else:
-					print('X')
-    		print()
+					s += 'X'
+			print(s)
 
 	# Create a .txt of the map
 	def ExportMap(self):
@@ -230,94 +246,148 @@ class Pathfinding:
 	def ClearObstacles(self):
 		self.obstacles.clear()
 
+	def ComputeLineOfSight(self, p1, p2):
+		coef = (p2.y - p1.y) / (p2.x - p1.x)
+		ordo = p1.y - (coef * p1.x)
+		line = []
+		for x in range(min(p1.x, p2.x)+1, max(p1.x, p2.x)):
+			line.append(Point(x, int(x * coef + ordo)))
+		return line
+
 	# Test if there is nos obstacle on the line of sight between two point
 	def IfOnLineOfSight(self, p1, p2):
-		coef = (p1.y - p2.y) / (p1.x - p1.x)
-		ordo = p1.y - (coef * p1.x)
-		for x in range(p1.x, p2.x+1):
-			if self.IsBlocked(x, (coef * x) + ordo):
-				return true
-		return false
+		line = self.ComputeLineOfSight(p1, p2)
+		for p in line:
+			if self.map.IsBlocked(p.x, p.y):
+				print("There is an obstacle in : " + str(p))
+				return True
+		print("No obstacle")
+		return False
 
-	# Return the first obstacle in the line of Sight
-	def FirstObstacleInLineOfSight(self, p1, p2):
-		coef = (p1.y - p2.y) / (p1.x - p1.x)
-		ordo = p1.y - (coef * p1.x)
-		for x in range(p1.x, p2.x+1):
-			if self.IsBlocked(x, (coef * x) + ordo):
-					for obstacle in self.obstacles:
-						if x >= obstacle.x1 and x <= obstacle.x2 and ((coef * x) + ordo) >= obstacle.y1 and ((coef * x) + ordo) <= obstacle.y2:
-							return obstacle
-					return None
-		return None
+	# Return the point of collision with the first obstacle in the line of Sight and the obstacle
+	def ComputeListOfCollision(self, p1, p2):
+		line = self.ComputeLineOfSight(p1, p2)
+		collision = []
+		for p in line:
+			if self.map.IsBlocked(p.x, p.y):		
+				print("The first obstacle is in : " + str(p))
+				for obstacle in self.obstacles:
+					if p.x >= obstacle.x1 and p.x <= obstacle.x2 and p.y >= obstacle.y1 and p.y <= obstacle.y2:
+						print(str(obstacle))
+						if (p, obstacle) != collison[len(collision) - 1] or collision == []:
+							collison.append((p, obstacle))
+		print("List of collision finish")
+		return collision
 
-	# Add two point to pass at the right of the obstacle
-	def ComputePathFromRight(self, obstacle, path):
-		if self.map.IsBlocked(obstacle.x1 - self.robot_radius, obstacle.y2 + self.robot_radius):
-			return None
-		if self.map.IsBlocked(obstacle.x2 + self.robot_radius, obstacle.y2 + self.robot_radius):
-			return None
-		path.AddPoint(self.GetPoint(obstacle.x1 - self.robot_radius, obstacle.y2 + self.robot_radius))
-		path.AddPoint(self.GetPoint(obstacle.x2 + self.robot_radius, obstacle.y2 + self.robot_radius))
-		return path
+	# Return the side of an obstacle
 
-	# Add two point to pass at the left of the obstecla
-	def ComputePathFromLeft(self, obstacle, path):
-		if self.map.IsBlocked(obstacle.x1 - self.robot_radius, obstacle.y1 - self.robot_radius):
+	#              b1
+	#          -----------
+	#          |         |
+	#      a1  |         |  a2
+	#          |         |
+	#          -----------
+	#              b2
+
+	# a1 and b1 : right
+	# a2 and b2 : left
+
+	# 1 : a
+	# 2 : b
+
+	def SelectSide(self, obstacle, p):
+		if p.x == obstacle.x1 or p.x == obstacle.x2:
+			return 1
+		else:
+			return 2
+	
+	# Return a point to pass by the rigth of an obstacle
+	def ComputeFromRight(self, collision):
+		p = collision[0]
+		obstacle = collision[1]
+		side = self.SelectSide(obstacle, p)
+		if side == 2:
+			pointofliberty = Point((obstacle.x1 - self.robot_radius - int((sqrt(3)/2) * (obstacle.y2 - obstacle.y1)//2)), ((obstacle.y2 - obstacle.y1)//2 + obstacle.y1))
+		else:
+			pointofliberty = Point(((obstacle.x2 - obstacle.x1)//2 + obstacle.x1), (obstacle.y2 + self.robot_radius + int((sqrt(3)/2) * (obstacle.x2 - obstacle.x1)//2)))
+		if self.map.IsBlocked(pointofliberty):
 			return None
-		if self.map.IsBlocked(obstacle.x2 + self.robot_radius, obstacle.y1 - self.robot_radius):
+		else:
+			return pointofliberty
+
+	# Compute a path from the left of an obstacle
+	def ComputeFromLeft(self, collision):
+		p = collision[0]
+		obstacle = collision[1]
+		side = self.Selectside(obstacle, p)
+		if side == 2:
+			pointofliberty = Point((obstacle.x2 + self.robot_radius + int((sqrt(3)/2) * (obstacle.y2 - obstacle.y1)//2)), (obstacle.y1 + (obstacle.y2 - obstacle.y1)//2))
+		else:
+			pointofliberty = Point((obstacle.x1 + (obstacle.x2 - obstacle.x1)//2), (obstacle.y1 - self.robot_radius - int((sqrt(3)/2) * (obstacle.x2 - obstacle.x1)//2)))
+		if self.map.IsBlocked(pointofliberty):
 			return None
-		path.AddPoint(self.GetPoint(obstacle.x1 - self.robot_radius, obstacle.y1 - self.robot_radius))
-		path.AddPoint(self.GetPoint(obstacle.x2 + self.robot_radius, obstacle.y1 - self.robot_radius))
-		return path
+		else:
+			return pointofliberty
 
 	# Return if a path is possible
 	def IsPossible(self, path):
 		for i in range(0, len(path)-1):
 			if self.IfOnLineOfSight(path.listofpoint[i], path.listofpoint[i+1]):
-				return false
-		return true
+				return False
+		return True
 
-	# Compute the better pass between two point
-	def ComputePath(self, p1, p2):
+	# Compute the better pass between two point with stop as the number of iteration before stop
+	def ComputePath(self, p1, p2, stop):
+		if self.map.IsBlocked(p1.x, p1.y) or self.map.IsBlocked(p2.x, p2.y):
+			print("Can't acces to this point")
+			return None
 		allpath = []
 		path = Path(p1)
 		path.AddPoint(p2)
 		allpath.append(path)
-		passpossible = []
-		while true:
+		for n in range (stop + 1):
+			found = None
 			for path in allpath:
-				if IsPossible(path):
-					passpossible.append(path)
-			if passpossible != []:
-				found = passpossible[0]
-				for path in range(1, len(passpossible)):
-					if found.ComputeCost() > path.ComputeCost():
-						found = path
-				return path
+				if self.IsPossible(path) and (found == None or (path.ComputeCost() < found.ComputeCost())):
+					found = path
+			if found != None:
+				print("Path found after " + str(n) + " iterations")
+				print("Path is : " + str(path))
+				return found
 			else:
 				for path in allpath:
-					j = 1
 					pathr = Path(p1)
-					pathl = Path(p1)
+					pathl = Path(p2)
+					failr = False
+					faill = False
 					for i in range(1, len(path)):
-						if IfOnLineOfSight(path.listofpoint[i-1], path.listofpoint[i]):
-							pathr = (FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathr))
-							pathl = (FirstObstacleInLineOfSight(path.listofpoint[i-1], path.listofpoint[i]), pathl))
-							break
-						j += 1
-						pathr.AddPoint(path.listofpoint[i])
-						pathl.AddPoint(path.listogpoint[i])
-					for i in range(j, len(path)):
-						if pathr != None:
+						if self.IfOnLineOfSight(path.listofpoint[i-1], path.listofpoint[i]):
+							collision = self.ComputeListOfCollision(path.listofpoint[i-1], path.listofpoint[i])
+							for col in collision:
+								if not failr:
+									pointr = (self.ComputeFromRight(col))
+									if pointr == None:
+										failr = True
+									else:
+										pathr.AddPoint(pointr)
+								if not faill:
+									pointl = (self.ComputeFormLeft(col))
+									if pointl == None:
+										faill = True
+									else:
+										pathl.AddPoint(pointl)
 							pathr.AddPoint(path.listofpoint[i])
-						if pathl != None:
-							pathl.AddPoint(path.listogpoint[i])
-					if pathr != None:
+							pathl.AddPoint(path.listofpoint[i])
+					alpath.remove(path)
+					if not failr:
 						allpath.append(pathr)
-					if pathl != None:
+					if not faill:
 						allpath.append(pathl)
-					allpath.remove(path)
+				if allpath == []:
+					print("Can't find a path")
+					return None
+		print("No path found before doing " + str(stop) + " iterations")
+		return None
 
 	# Debug Part
 
