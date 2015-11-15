@@ -9,12 +9,7 @@ def main():
 	pathf.AddRectangleObstacle(120, 120, 190, 120)
 	pathf.RemoveObstaclePosition(120, 120, 190, 120)
 	pathf.PrintObstacles()
-	collision = pathf.ComputeListOfCollision(pathfinding.Point(40, 120), pathfinding.Point(2003, 1204))
-	for coll in collision:
-		print(str(coll[1]))
-		print(str(coll[0]))
 	path = pathf.ComputePath(pathfinding.Point(40, 120), pathfinding.Point(2003, 1204), 10)
-	print(str(path))
 
 if __name__ == '__main__':
 	main()

@@ -73,9 +73,10 @@ class Path:
 	
 	def __str__(self):
 		s = ""
-		for p in self.listofpoint:
-
-			s += str(p) + " -> "
+		for i in range(len(self.listofpoint)):
+			s += str(self.listofpoint[i])
+			if i != (len(self.listofpoint) - 1):
+				s += " -> "
 		return s
 
 	# Debug part
@@ -338,6 +339,7 @@ class Pathfinding:
 			if self.IfOnLineOfSight(path.listofpoint[i], path.listofpoint[i+1]):
 				print("Path not possible")
 				return False
+		print("Path possible")
 		return True
 
 	# Compute the better path between two point with stop as the number of iteration before stop
@@ -345,6 +347,7 @@ class Pathfinding:
 		if self.map.IsBlocked(p1.x, p1.y) or self.map.IsBlocked(p2.x, p2.y):
 			print("Incorrect Point")
 			return None
+		print("Compute path starting to : " + str(p1) + " to : " + str(p2))
 		allpath = []
 		path = Path(p1)
 		path.AddPoint(p2)
@@ -367,7 +370,6 @@ class Pathfinding:
 					failr = False
 					faill = False
 					for i in range(1, len(path)):
-						print("i : " + str(i))
 						print("Analyse path between " + str(path.listofpoint[i-1]) + " and " + str(path.listofpoint[i]))
 						if self.IfOnLineOfSight(path.listofpoint[i-1], path.listofpoint[i]):
 							collision = self.ComputeListOfCollision(path.listofpoint[i-1], path.listofpoint[i])
