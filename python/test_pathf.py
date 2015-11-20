@@ -1,4 +1,6 @@
 import pathfinding
+import timeit
+import functools
 
 def main():
 	pathf = pathfinding.Pathfinding(3000, 2000, 15)
@@ -9,7 +11,7 @@ def main():
 	pathf.AddRectangleObstacle(120, 120, 190, 120)
 	pathf.RemoveObstaclePosition(120, 120, 190, 120)
 	pathf.PrintObstacles()
-	path = pathf.ComputePath(pathfinding.Point(40, 120), pathfinding.Point(2003, 1204), 10)
+	print(timeit.timeit(functools.partial(pathf.ComputePath, pathfinding.Point(40, 120), pathfinding.Point(2003, 1204), 10), number = 1000))
 
 if __name__ == '__main__':
 	main()
